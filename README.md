@@ -1,21 +1,58 @@
 # selfhosted-checks
 
-Minimal Kotlin CLI that runs a fixed battery of health/conformance checks
-against a Mastodon instance and emits JUnit XML.
+Deep, service-aware health checks for self-hosted FLOSS services.
+One-shot CLI for CI pipelines, JUnit XML output, fails fast on real issues.
 
-V0.1 — Mastodon only. Multi-service support, plugins, dashboards, and
-persistence are explicitly out of scope (planned for V1.0).
+## Why
 
-## Checks
+Self-hosters running Mastodon, Nextcloud, or Matrix typically rely on one of two
+unsatisfying options:
+
+- **Generic uptime monitoring** (Uptime Kuma, Prometheus blackbox exporter,
+  StatusCake) — tells you whether a URL returns HTTP 200. It does not tell you
+  whether federation actually works, whether WebFinger is discoverable, or
+  whether NodeInfo conforms to the schema that peer servers will expect.
+- **Manual smoke tests** — slow, easy to skip, and don't fit a CI pipeline.
+
+`selfhosted-checks` sits between them: deep, service-specific conformance
+checks that run as a one-shot CLI, emit machine-readable JUnit XML, and exit
+non-zero if anything is broken. It is a different shape of tool than
+continuous monitoring (it does not run loops), and a different scope than
+W3C protocol conformance suites like FediTest (it cares about *one running
+instance you control*, not the spec at large).
+
+Typical use cases:
+
+- post-deploy gate in a CI pipeline before flipping DNS to a new server,
+- one-shot diagnostic when something feels off but uptime monitors are green,
+- pre-flight check after a major version upgrade.
+
+## Status
+
+**V0.1 — Mastodon module functional (6 checks).** This is an MVP. Code is
+real, no mocks, no TODOs.
+
+Roadmap (post-V0.1):
+
+- Nextcloud module (~25 checks: WebDAV, OCS, app store, background jobs)
+- Matrix Synapse module (~25 checks: federation handshake, media repo,
+  identity server, key auth)
+- Plugin architecture so community-contributed modules can ship out-of-tree
+
+## Checks (V0.1, Mastodon)
 
 | Name                          | What it verifies                                                  |
 |-------------------------------|-------------------------------------------------------------------|
-| `http_reachability_and_tls`   | Root URL is reachable over HTTPS with a valid TLS handshake       |
+| `http_reachability_and_tls`   | Raw TCP + TLS handshake on :443 with a cert chain valid for host  |
 | `instance_api_v2`             | `GET /api/v2/instance` returns 200 + JSON with `domain/title/version` |
 | `webfinger`                   | `/.well-known/webfinger?resource=acct:…` responds (200 JRD or 404) |
 | `nodeinfo_2_0`                | NodeInfo discovery + `/nodeinfo/2.0` schema conformance           |
 | `federation_peers`            | `GET /api/v1/instance/peers` returns a JSON array                 |
 | `rate_limit_headers`          | `X-RateLimit-Limit` / `X-RateLimit-Remaining` are exposed         |
+
+The reachability check uses the JDK SSL stack directly (not Ktor) so it
+verifies *only* TCP + TLS without confusing the result with HTTP-layer
+weirdness (Cloudflare, chunked HTML, HTTP/2 quirks).
 
 ## Usage
 
@@ -23,19 +60,22 @@ persistence are explicitly out of scope (planned for V1.0).
 selfhosted-checks <instance-url> [--out <path>]
 ```
 
-- `<instance-url>` — full root URL (e.g. `https://mastodon.social`). Must be HTTPS.
+- `<instance-url>` — full root URL (e.g. `https://mastodon.social`). HTTPS required.
 - `--out <path>` — write JUnit XML to a file instead of stdout.
 
 Exit codes: `0` all passed, `1` one or more failed/errored, `2` bad arguments.
 
-Per-check progress lines are written to stderr; JUnit XML goes to stdout (unless `--out` is set).
+Per-check progress lines are written to stderr; JUnit XML goes to stdout
+(unless `--out` is set).
 
-## Run with Docker
+## Run with Docker / Podman
 
 Build:
 
 ```sh
 docker build -t vouch:dev .
+# or:
+podman build -t vouch:dev .
 ```
 
 Run:
@@ -56,7 +96,7 @@ Or with `--out` and a bind mount:
 docker run --rm -v "$PWD:/out" vouch:dev https://mastodon.social --out /out/results.xml
 ```
 
-## Build & run locally (no Docker)
+## Build & run locally (no container)
 
 Requires JDK 17+.
 
@@ -71,20 +111,27 @@ Or via the Gradle `application` plugin:
 ./gradlew run --args="https://mastodon.social --out results.xml"
 ```
 
+Run the test suite:
+
+```sh
+./gradlew test
+```
+
 ## Example output
 
 Stderr (human-readable progress):
 
 ```
-[PASS] http_reachability_and_tls (0.42s) reachable, status 200, TLS OK
-[PASS] instance_api_v2 (0.61s) domain=mastodon.social version=4.3.1
-[PASS] webfinger (0.50s) endpoint live (404 for unknown account)
-[PASS] nodeinfo_2_0 (0.71s) nodeinfo 2.0 OK, software=mastodon
-[PASS] federation_peers (0.80s) peers array returned, size=18432
-[FAIL] rate_limit_headers (0.36s) no X-RateLimit-* headers exposed on /api/v1/instance
+[PASS] http_reachability_and_tls (0.33s) TCP mastodon.social:443 OK, TLS TLSv1.3 / TLS_AES_128_GCM_SHA256
+[PASS] instance_api_v2 (0.36s) domain=mastodon.social version=4.6.0-nightly.2026-05-13
+[PASS] webfinger (0.37s) endpoint live (404 for unknown account)
+[PASS] nodeinfo_2_0 (0.36s) nodeinfo 2.0 OK, software=mastodon
+[PASS] federation_peers (0.54s) peers array returned, size=115690
+[PASS] rate_limit_headers (0.19s) limit=300 remaining=299
 ```
 
 Stdout (JUnit XML) — see [`example-output.xml`](example-output.xml).
+Generated by a real run against `https://mastodon.social`, not a mock.
 
 ## Project layout
 
@@ -95,18 +142,25 @@ src/main/kotlin/vouch/
 ├── HttpClientFactory.kt    # Shared Ktor CIO client config
 ├── JUnitXml.kt             # JUnit XML serializer
 └── checks/
-    ├── HttpReachabilityCheck.kt
+    ├── HttpReachabilityCheck.kt   # raw JDK SSL handshake, no HTTP
     ├── InstanceApiCheck.kt
     ├── WebfingerCheck.kt
     ├── NodeInfoCheck.kt
     ├── PeersCheck.kt
     └── RateLimitHeadersCheck.kt
+
+src/test/kotlin/vouch/
+├── JUnitXmlTest.kt
+├── CheckResultTest.kt
+└── checks/
+    └── InstanceApiCheckTest.kt    # Ktor MockEngine-driven check test
 ```
 
 ## Adding a check
 
-Implement `vouch.Check` (one class per file, in `vouch.checks`), then add it to the
-`checks` list in [`Main.kt`](src/main/kotlin/vouch/Main.kt). The interface is:
+Implement `vouch.Check` (one class per file, in `vouch.checks`), then add it
+to the `checks` list in [`Main.kt`](src/main/kotlin/vouch/Main.kt). The
+interface is:
 
 ```kotlin
 interface Check {
@@ -117,10 +171,32 @@ interface Check {
 
 `CheckResult` is `Pass(message)`, `Fail(message)`, or `Error(message, throwable?)`.
 
+For HTTP-based checks, take `HttpClient` via constructor so the test suite
+can inject a `MockEngine`.
+
+## Differentiation
+
+- **Uptime Kuma / blackbox exporter** — these poll continuously, alert on
+  HTTP status. `selfhosted-checks` is one-shot and inspects payload
+  semantics (NodeInfo schema, WebFinger JRD shape, presence of rate-limit
+  headers). Complementary, not competing.
+- **FediTest (W3C)** — protocol conformance against the ActivityPub spec.
+  Different question: "does this server implement the spec correctly?"
+  vs. our "is my instance healthy *right now*?"
+- **Synapse/Mastodon admin CLIs** — operator tools that need shell on the
+  box. `selfhosted-checks` runs from outside, treats the instance as a
+  black box.
+
 ## Stack
 
 - Kotlin 2.1, JVM 17
-- Ktor 3.0 client (CIO engine)
+- Ktor 3.0 client (CIO engine) for HTTP, JDK `SSLSocket` for raw TLS
 - kotlinx.serialization for JSON
-- Gradle Kotlin DSL + Shadow plugin for the fat JAR
-- Multi-stage Docker build, Alpine + Temurin JRE 17
+- Gradle 8.10 wrapper, Kotlin DSL, Shadow plugin for the fat JAR
+- Multi-stage Docker/OCI build, Alpine + Temurin JRE 17, non-root user
+- JUnit 5 + Ktor MockEngine for tests
+
+## License
+
+[AGPL-3.0-or-later](LICENSE). Consistent with the rest of the Fediverse
+ecosystem (Mastodon, Lemmy, PeerTube, Nextcloud).

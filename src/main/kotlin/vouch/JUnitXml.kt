@@ -23,9 +23,12 @@ object JUnitXml {
             )
             when (val r = case.result) {
                 is CheckResult.Pass -> {
-                    sb.append("/>\n")
-                    if (r.message.isNotBlank()) {
-                        // system-out previously written outside testcase is allowed; embed inside
+                    if (r.message.isBlank()) {
+                        sb.append("/>\n")
+                    } else {
+                        sb.append(">\n")
+                        sb.append("      <system-out>${escape(r.message)}</system-out>\n")
+                        sb.append("    </testcase>\n")
                     }
                 }
                 is CheckResult.Fail -> {

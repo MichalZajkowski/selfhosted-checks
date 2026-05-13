@@ -16,7 +16,7 @@ object HttpClientFactory {
 
     fun create(): HttpClient = HttpClient(CIO) {
         expectSuccess = false
-        install(UserAgent) { agent = "selfhosted-checks/0.1 (+https://github.com/example/selfhosted-checks)" }
+        install(UserAgent) { agent = "selfhosted-checks/0.1 (+https://github.com/MichalZajkowski/selfhosted-checks)" }
         install(HttpTimeout) {
             requestTimeoutMillis = 15_000
             connectTimeoutMillis = 10_000

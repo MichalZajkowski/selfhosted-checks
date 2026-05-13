@@ -21,6 +21,11 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+
+    testImplementation(kotlin("test-junit5"))
+    testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 application {
@@ -29,6 +34,10 @@ application {
 
 kotlin {
     jvmToolchain(17)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.shadowJar {

@@ -1,13 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="selfhosted-checks.mastodon" tests="6" failures="1" errors="0" time="3.412">
-    <testcase classname="selfhosted-checks.mastodon" name="http_reachability_and_tls" time="0.421"/>
-    <testcase classname="selfhosted-checks.mastodon" name="instance_api_v2" time="0.612"/>
-    <testcase classname="selfhosted-checks.mastodon" name="webfinger" time="0.503"/>
-    <testcase classname="selfhosted-checks.mastodon" name="nodeinfo_2_0" time="0.711"/>
-    <testcase classname="selfhosted-checks.mastodon" name="federation_peers" time="0.802"/>
-    <testcase classname="selfhosted-checks.mastodon" name="rate_limit_headers" time="0.363">
-      <failure message="no X-RateLimit-* headers exposed on /api/v1/instance" type="CheckFailure">no X-RateLimit-* headers exposed on /api/v1/instance</failure>
+  <testsuite name="selfhosted-checks.mastodon" tests="6" failures="0" errors="0" time="3.899">
+    <testcase classname="selfhosted-checks.mastodon" name="http_reachability_and_tls" time="0.584">
+      <system-out>TCP mastodon.social:443 OK, TLS TLSv1.3 / TLS_AES_128_GCM_SHA256</system-out>
+    </testcase>
+    <testcase classname="selfhosted-checks.mastodon" name="instance_api_v2" time="0.547">
+      <system-out>domain=mastodon.social version=4.6.0-nightly.2026-05-13</system-out>
+    </testcase>
+    <testcase classname="selfhosted-checks.mastodon" name="webfinger" time="0.301">
+      <system-out>endpoint live (404 for unknown account)</system-out>
+    </testcase>
+    <testcase classname="selfhosted-checks.mastodon" name="nodeinfo_2_0" time="0.467">
+      <system-out>nodeinfo 2.0 OK, software=mastodon</system-out>
+    </testcase>
+    <testcase classname="selfhosted-checks.mastodon" name="federation_peers" time="0.773">
+      <system-out>peers array returned, size=115690</system-out>
+    </testcase>
+    <testcase classname="selfhosted-checks.mastodon" name="rate_limit_headers" time="1.218">
+      <system-out>limit=300 remaining=299</system-out>
     </testcase>
   </testsuite>
 </testsuites>
