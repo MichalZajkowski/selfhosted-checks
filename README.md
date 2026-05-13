@@ -1,5 +1,7 @@
 # selfhosted-checks
 
+[![CI](https://github.com/MichalZajkowski/selfhosted-checks/actions/workflows/ci.yml/badge.svg)](https://github.com/MichalZajkowski/selfhosted-checks/actions/workflows/ci.yml)
+
 Deep, service-aware health checks for self-hosted FLOSS services.
 One-shot CLI for CI pipelines, JUnit XML output, fails fast on real issues.
 
