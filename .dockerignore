@@ -1,0 +1,9 @@
+.gradle/
+build/
+.idea/
+.git/
+*.iml
+out/
+results.xml
+README.md
+example-output.xml

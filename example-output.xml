@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="selfhosted-checks.mastodon" tests="6" failures="1" errors="0" time="3.412">
+    <testcase classname="selfhosted-checks.mastodon" name="http_reachability_and_tls" time="0.421"/>
+    <testcase classname="selfhosted-checks.mastodon" name="instance_api_v2" time="0.612"/>
+    <testcase classname="selfhosted-checks.mastodon" name="webfinger" time="0.503"/>
+    <testcase classname="selfhosted-checks.mastodon" name="nodeinfo_2_0" time="0.711"/>
+    <testcase classname="selfhosted-checks.mastodon" name="federation_peers" time="0.802"/>
+    <testcase classname="selfhosted-checks.mastodon" name="rate_limit_headers" time="0.363">
+      <failure message="no X-RateLimit-* headers exposed on /api/v1/instance" type="CheckFailure">no X-RateLimit-* headers exposed on /api/v1/instance</failure>
+    </testcase>
+  </testsuite>
+</testsuites>
