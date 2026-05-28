@@ -43,14 +43,14 @@ Roadmap (post-V0.1):
 
 ## Checks (V0.1, Mastodon)
 
-| Name                          | What it verifies                                                  |
-|-------------------------------|-------------------------------------------------------------------|
-| `http_reachability_and_tls`   | Raw TCP + TLS handshake on :443 with a cert chain valid for host  |
-| `instance_api_v2`             | `GET /api/v2/instance` returns 200 + JSON with `domain/title/version` |
-| `webfinger`                   | `/.well-known/webfinger?resource=acct:…` responds (200 JRD or 404) |
-| `nodeinfo_2_0`                | NodeInfo discovery + `/nodeinfo/2.0` schema conformance           |
-| `federation_peers`            | `GET /api/v1/instance/peers` returns a JSON array                 |
-| `rate_limit_headers`          | `X-RateLimit-Limit` / `X-RateLimit-Remaining` are exposed         |
+| Name                        | What it verifies                                                                         |
+|-----------------------------|------------------------------------------------------------------------------------------|
+| `http_reachability_and_tls` | Raw TCP + TLS handshake on :443 with a cert chain valid for host                         |
+| `instance_api_v2`           | `GET /api/v2/instance` returns 200 + JSON with `domain/title/version`                    |
+| `webfinger`                 | `/.well-known/webfinger?resource=acct:…` responds (200 JRD or 404)                       |
+| `nodeinfo_2_0`              | NodeInfo discovery + `/nodeinfo/2.0` schema conformance                                  |
+| `federation_peers`          | `GET /api/v1/instance/peers` returns a JSON array                                        |
+| `rate_limit_headers`        | `X-RateLimit-Limit` / `X-RateLimit-Remaining` exposed (non-fatal if a proxy strips them) |
 
 The reachability check uses the JDK SSL stack directly (not Ktor) so it
 verifies *only* TCP + TLS without confusing the result with HTTP-layer

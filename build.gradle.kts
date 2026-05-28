@@ -38,6 +38,10 @@ kotlin {
 
 tasks.test {
     useJUnitPlatform()
+    doNotTrackState("Prevents Windows+IntelliJ file locking on test result cleanup")
+    binaryResultsDirectory.set(
+        file(System.getProperty("java.io.tmpdir")).resolve("gradle-test-binary/${project.name}")
+    )
 }
 
 tasks.shadowJar {

@@ -15,13 +15,17 @@ class RateLimitHeadersCheck(private val client: HttpClient) : Check {
             val response = client.get(url)
             val limit = response.headers["X-RateLimit-Limit"]
             val remaining = response.headers["X-RateLimit-Remaining"]
+            // Missing rate-limit headers do not mean the instance is unhealthy:
+            // a reverse proxy can legitimately strip them. Treated as non-fatal,
+            // consistent with PeersCheck's handling of a disabled peers endpoint.
+            // A failed request (exception below) is the only fatal outcome here.
             when {
                 limit != null && remaining != null ->
                     CheckResult.Pass("limit=$limit remaining=$remaining")
                 limit != null || remaining != null ->
-                    CheckResult.Fail("only partial rate-limit headers exposed (limit=$limit, remaining=$remaining)")
+                    CheckResult.Pass("partial rate-limit headers (limit=$limit, remaining=$remaining) — non-fatal")
                 else ->
-                    CheckResult.Fail("no X-RateLimit-* headers exposed on /api/v1/instance")
+                    CheckResult.Pass("no X-RateLimit-* headers exposed — non-fatal (a reverse proxy may strip them)")
             }
         } catch (e: Exception) {
             CheckResult.Error("request failed: ${e.message}", e)

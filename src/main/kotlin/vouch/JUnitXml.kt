@@ -50,7 +50,7 @@ object JUnitXml {
         return sb.toString()
     }
 
-    private fun fmt(seconds: Double): String = "%.3f".format(seconds)
+    private fun fmt(seconds: Double): String = String.format(java.util.Locale.ROOT, "%.3f", seconds)
 
     private fun escape(s: String): String = buildString(s.length) {
         for (c in s) when (c) {
